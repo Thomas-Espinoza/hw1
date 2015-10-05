@@ -36,7 +36,7 @@
 #include <GL/glx.h>
 
 extern "C" {
-	#include "fonts.h"
+  #include "fonts.h"
 }
 
 #define WINDOW_WIDTH  800
@@ -75,18 +75,17 @@ struct Game {
   int lastMousex, lastMousey;
 };
 
+//Condition for particle bubbler
 int autoParticle = 0;
 
 //Function prototypes
 void initXWindows(void);
 void init_opengl(void);
 void cleanupXWindows(void);
-void check_mouse(XEvent *e, Game *game);
-int check_keys(XEvent *e, Game *game);
+int check_keys(XEvent *e);
 void makeParticle(Game *game, int x, int y);
 void movement(Game *game);
 void render(Game *game);
-//void autoParticle();
 
 int main(void)
 {
@@ -98,12 +97,7 @@ int main(void)
   Game game;
   game.n=0;
   
-  //declare a box shape
-  //game.box[0].width = 100;
-  //game.box[0].height = 50;
-  //game.box[0].center.x = 120 + 5*65;
-  //game.box[0].center.y = 500 - 5*60;
-  
+  //declare box shapes
   game.box[0].width = 100;
   game.box[0].height = 25;
   game.box[0].center.x = 100;
@@ -111,18 +105,23 @@ int main(void)
   
   game.box[1].width = 100;
   game.box[1].height = 25;
-  game.box[1].center.x = 250;
-  game.box[1].center.y = 400;
+  game.box[1].center.x = 210;
+  game.box[1].center.y = 425;
   
   game.box[2].width = 100;
   game.box[2].height = 25;
-  game.box[2].center.x = 400;
-  game.box[2].center.y = 300;
+  game.box[2].center.x = 320;
+  game.box[2].center.y = 350;
   
   game.box[3].width = 100;
   game.box[3].height = 25;
-  game.box[3].center.x = 550;
-  game.box[3].center.y = 200;
+  game.box[3].center.x = 430;
+  game.box[3].center.y = 275;
+  
+  game.box[4].width = 100;
+  game.box[4].height = 25;
+  game.box[4].center.x = 540;
+  game.box[4].center.y = 200;
   
   game.circle.center.x = 725;
   game.circle.center.y = 20;
@@ -133,8 +132,7 @@ int main(void)
     while(XPending(dpy)) {
       XEvent e;
       XNextEvent(dpy, &e);
-      //check_mouse(&e, &game);
-      done = check_keys(&e, &game);
+      done = check_keys(&e);
       
     }
     
@@ -156,7 +154,7 @@ void set_title(void)
 {
   //Set the window title bar.
   XMapWindow(dpy, win);
-  XStoreName(dpy, win, "335 Lab1   LMB for particle");
+  XStoreName(dpy, win, "335 Lab1   Press 'b' for particle");
 }
 
 void cleanupXWindows(void) {
@@ -188,7 +186,7 @@ void initXWindows(void) {
   PointerMotionMask |
   StructureNotifyMask | SubstructureNotifyMask;
   win = XCreateWindow(dpy, root, 0, 0, w, h, 0, vi->depth,
-		      InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+  InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
   set_title();
   glc = glXCreateContext(dpy, vi, NULL, GL_TRUE);
   glXMakeCurrent(dpy, win, glc);
@@ -205,8 +203,8 @@ void init_opengl(void)
   glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
   
   //Do this to allow fonts
-	glEnable(GL_TEXTURE_2D);
-	initialize_fonts();
+  glEnable(GL_TEXTURE_2D);
+  initialize_fonts();
   
   //Set the screen background color
   glClearColor(0.1, 0.1, 0.1, 1.0);
@@ -221,58 +219,17 @@ void makeParticle(Game *game, int x, int y)
     return;
   std::cout << "makeParticle() " << x << " " << y << std::endl;
   //position of particle
-  //while (game->n < MAX_PARTICLES) {
   Particle *p = &game->particle[game->n];
   p->s.center.x = x;
   p->s.center.y = y;
   p->velocity.y = 0 + rnd()*1.0 - 0.5;
-  p->velocity.x =  1.5 + rnd()*0.1;
+  p->velocity.x =  1.5 + rnd()*0.5;
   game->n++;
-  //}
 }
 
-void check_mouse(XEvent *e, Game *game)
-{
-  
-  makeParticle(game, 25, 600);
-  return;
-  
-  /*static int savex = 0;
-   *	static int savey = 0;
-   * 
-   *	if (e->type == ButtonRelease) {
-   *		return;
-}
-if (e->type == ButtonPress) {
-  if (e->xbutton.button==1) {
-    //Left button was pressed
-    int y = WINDOW_HEIGHT - e->xbutton.y;
-    for (int i=0; i<10; i++) {
-      makeParticle(game, e->xbutton.x, y);
-}
-return;
-}
-if (e->xbutton.button==3) {
-  //Right button was pressed
-  return;
-}
-}
-//Did the mouse move?
-if (savex != e->xbutton.x || savey != e->xbutton.y) {
-  savex = e->xbutton.x;
-  savey = e->xbutton.y;
-  int y = WINDOW_HEIGHT - e->xbutton.y;
-  for (int i=0; i<10; i++) {
-    makeParticle(game, e->xbutton.x, y);
-}
-//if (++n < 10)
-//	return;
-game->lastMousex = e->xbutton.x;
-game->lastMousey = y;
-}*/
-}
 
-int check_keys(XEvent *e, Game *game)
+
+int check_keys(XEvent *e/*, Game *game*/)
 {
   //Was there input from the keyboard?
   if (e->type == KeyPress) {
@@ -281,9 +238,14 @@ int check_keys(XEvent *e, Game *game)
       return 1;
     }
     
+    //will toggle the bubbler by checking if it is on or not
     if (key == XK_b) {
-      autoParticle=1;
-      //makeParticle(game, 25, 600);
+      if (autoParticle == 0) {
+        autoParticle=1;
+        return 0;
+      }
+      
+      autoParticle=0;
       return 0;
     }
     //You may check other keys here.
@@ -313,13 +275,10 @@ void movement(Game *game)
     for (int j=0; j<5; j++) {
       Shape *s = &game->box[j];
       
-      if (p->s.center.y < s->center.y + s->height &&
-	p->s.center.y > s->center.y - s->height &&
-	p->s.center.x >= s->center.x - s->width &&
-	p->s.center.x <= s->center.x + s->width) {
+      if (p->s.center.y < s->center.y + s->height && p->s.center.y > s->center.y - s->height && p->s.center.x >= s->center.x - s->width && p->s.center.x <= s->center.x + s->width) {
 	p->velocity.y *= -0.4;
-      p->s.center.y = s->center.y + s->height + 0.01;
-	}    
+	p->s.center.y = s->center.y + s->height + 0.01;
+      }    
     }
     
     //check for circle collision
@@ -329,8 +288,6 @@ void movement(Game *game)
     d1 = p->s.center.y - game->circle.center.y;
     dist = sqrt(d0*d0 + d1*d1);
     if (dist <= game->circle.radius) {
-      //p->velocity.y *= -1; 
-      //float v[2];
       d0 /= dist;
       d1 /= dist;
       d0 *= game->circle.radius * 1.01; 
@@ -357,8 +314,6 @@ void render(Game *game)
   float w, h;
   glClear(GL_COLOR_BUFFER_BIT);
   //Draw shapes...
-  
-
   
   //draw circle
   static int firsttime=1;
@@ -425,13 +380,43 @@ void render(Game *game)
     glPopMatrix();
   }
   
-    //Draw text
-  Rect r;
-  r.bot = 500;
-  r.left = 150;
-  r.center = 150;
+  //Draw text
+  Rect r1;
+  Rect r2;
+  Rect r3;
+  Rect r4;
+  Rect r5;
+  
+  r1.bot = 500;
+  r1.left = 135;
+  r1.center = 150;
+  
+  r2.bot = 425;
+  r2.left = 270;
+  r2.center = 250;
+  
+  r3.bot = 350;
+  r3.left = 375;
+  r3.center = 150;
+  
+  r4.bot = 275;
+  r4.left = 470;
+  r4.center = 150;
+  
+  r5.bot = 200;
+  r5.left = 565;
+  r5.center = 150;
+  
   unsigned int cref = 0x00ffffff;
-  ggprint8b(&r, 16, cref, "DESIGN");
+  ggprint8b(&r1, 16, cref, "REQUIREMENTS");
+  
+  ggprint8b(&r2, 16, cref, "DESIGN");
+  
+  ggprint8b(&r3, 16, cref, "CODING");
+  
+  ggprint8b(&r4, 16, cref, "TESTING");
+  
+  ggprint8b(&r5, 16, cref, "MAINTENANCE");
   
 }
 
